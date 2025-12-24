@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣诞节快乐，亲爱的宝</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #ff6b6b 0.5px, transparent 0.5px),
+                radial-gradient(circle at 75% 75%, #4ecdc4 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tree {
+            font-size: 2rem;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            width: 150px;
+            height: 200px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            transform-style: preserve-3d;
+            margin: 0 auto;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 2px solid #4ecdc4;
+            overflow: hidden;
+        }
+
+        .card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-back {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            transform: rotateY(180deg);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.clone {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #ff6b6b;
+            top: -10px;
+            z-index: 1001;
+            animation: confettiFall linear infinite;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .snowflake {
+            position: fixed;
+            color: #fff;
+            font-size: 1em;
+            user-select: none;
+            z-index: 9999;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <h1><span class="tree">🎄</span> 圣诞节快乐，亲爱的宝 <span class="tree">🎄</span></h1>
+    
+    <div class="cards-container" id="cardsContainer">
+        <!-- 卡片将通过JavaScript动态生成 -->
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="resetBtn">重新开始</button>
+        <button class="btn" id="musicBtn">🔇 关闭音乐</button>
+    </div>
+
+    <!-- 音频元素 -->
+    <audio id="backgroundMusic" loop>
+        <source src="image/クリスマスソング-back_number-6714982-100.mp3" type="audio/mpeg">
+        您的浏览器不支持音频元素。
+    </audio>
+
+    <script>
+        // 抽奖结果数据
+        const prizes = [
+            "与奖：啥都没！怎么可能！你来定",
+            "二等奖：521",
+            "三等奖：88",
+            "参与奖：啥都没！怎么可能！你来定！",
+            "参与奖：啥都没！怎么可能！你来定！",
+            "二等奖：521",
+            "一等奖：888",
+            "三等奖：88",
+            "一等奖：521",
+            "参与奖：啥都没！怎么可能！你来定！",
+            "参与奖：啥都没！怎么可能！你来定！",
+            "一等奖：888",
+            "三等奖：88"
+        ];
+
+        // 卡片状态
+        let cards = [];
+        let isAnimating = false;
+        let currentClone = null;
+        let currentOriginal = null;
+
+        // 初始化卡片
+        function initCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+            cards = [];
+
+            for (let i = 0; i < 13; i++) {
+                const card = createCard(i + 1, prizes[i]);
+                container.appendChild(card);
+                cards.push(card);
+            }
+        }
+
+        // 创建卡片元素
+        function createCard(index, prize) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.index = index;
+
+            // 创建正面
+            const front = document.createElement('div');
+            front.className = 'card-face card-front';
+            
+            // 创建图片元素
+            const img = document.createElement('img');
+            img.src = `image/正面_${index}.png`;
+            img.alt = `卡片 ${index}`;
+            img.onerror = function() {
+                this.style.display = 'none';
+                front.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #4ecdc4; font-size: 1.5rem; font-weight: bold;">卡片 ${index}</div>`;
+            };
+            front.appendChild(img);
+
+            // 创建背面
+            const back = document.createElement('div');
+            back.className = 'card-face card-back';
+            back.innerHTML = `<div>${prize}</div>`;
+
+            card.appendChild(front);
+            card.appendChild(back);
+
+            card.addEventListener('click', () => flipCard(card));
+
+            return card;
+        }
+
+        // 翻转卡片
+        function flipCard(card) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // 如果有当前克隆卡片，先移除
+            if (currentClone) {
+                currentClone.remove();
+                currentClone = null;
+                // 显示原卡片
+                if (currentOriginal) {
+                    currentOriginal.style.visibility = 'visible';
+                    currentOriginal = null;
+                }
+            }
+
+            // 记录当前卡片
+            currentOriginal = card;
+            
+            // 创建克隆卡片
+            const clone = card.cloneNode(true);
+            clone.className = 'card clone';
+            
+            // 记录原卡片位置
+            const rect = card.getBoundingClientRect();
+            clone.style.left = `${rect.left}px`;
+            clone.style.top = `${rect.top}px`;
+            clone.style.width = `${rect.width}px`;
+            clone.style.height = `${rect.height}px`;
+            
+            // 隐藏原卡片
+            card.style.visibility = 'hidden';
+            
+            // 添加克隆到页面
+            document.body.appendChild(clone);
+            currentClone = clone;
+            
+            // 动画步骤1：移动到中央并放大
+            setTimeout(() => {
+                clone.style.transition = 'all 0.4s ease';
+                clone.style.left = '50%';
+                clone.style.top = '50%';
+                clone.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                clone.style.width = '300px';
+                clone.style.height = '400px';
+            }, 10);
+            
+            // 动画步骤2：翻转卡片
+            setTimeout(() => {
+                clone.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                clone.style.transform = 'translate(-50%, -50%) scale(1.5) rotateY(180deg)';
+                createConfetti();
+            }, 400);
+            
+            // 完成动画
+            setTimeout(() => {
+                isAnimating = false;
+            }, 1000);
+        }
+
+        // 创建彩花效果
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                confetti.style.backgroundColor = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffd93d', '#6bcb77'][Math.floor(Math.random() * 5)];
+                document.body.appendChild(confetti);
+
+                // 5秒后移除彩花
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        // 创建雪花效果
+        function createSnowflakes() {
+            const snowflakes = '❄️';
+            for (let i = 0; i < 30; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.textContent = snowflakes;
+                snowflake.style.left = `${Math.random() * 100}%`;
+                snowflake.style.animationDelay = `${Math.random() * 5}s`;
+                snowflake.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                snowflake.style.fontSize = `${Math.random() * 1.5 + 0.5}em`;
+                document.body.appendChild(snowflake);
+            }
+        }
+
+        // 重置游戏
+        function resetGame() {
+            // 移除克隆卡片
+            if (currentClone) {
+                currentClone.remove();
+                currentClone = null;
+            }
+            
+            // 显示所有原卡片
+            if (currentOriginal) {
+                currentOriginal.style.visibility = 'visible';
+                currentOriginal = null;
+            }
+            
+            // 移除所有彩花
+            const confettiElements = document.querySelectorAll('.confetti');
+            confettiElements.forEach(confetti => confetti.remove());
+        }
+
+        // 音乐控制
+        const music = document.getElementById('backgroundMusic');
+        const musicBtn = document.getElementById('musicBtn');
+        let isMusicPlaying = false;
+
+        // 音乐播放/暂停控制
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                music.pause();
+                musicBtn.textContent = '🎵 播放音乐';
+            } else {
+                music.play().catch(error => {
+                    console.log('自动播放被阻止，需要用户交互:', error);
+                    musicBtn.textContent = '🎵 播放音乐';
+                });
+                musicBtn.textContent = '🔇 关闭音乐';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        }
+
+        // 点击空白处让卡片归位
+        function handleBlankClick(event) {
+            // 判断是否点击了空白处（不是卡片、按钮等交互元素）
+            const target = event.target;
+            if (target.tagName === 'BODY' || target.className === 'cards-container' || target.tagName === 'HTML') {
+                // 如果有当前克隆卡片，执行归位逻辑
+                if (currentClone) {
+                    currentClone.remove();
+                    currentClone = null;
+                    // 显示原卡片
+                    if (currentOriginal) {
+                        currentOriginal.style.visibility = 'visible';
+                        currentOriginal = null;
+                    }
+                }
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initCards();
+            createSnowflakes();
+
+            // 重置按钮事件
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            
+            // 音乐按钮事件
+            musicBtn.addEventListener('click', toggleMusic);
+            
+            // 页面加载后尝试播放音乐，需要用户交互才能成功
+            // 添加全局点击事件，首次点击页面时播放音乐
+            document.body.addEventListener('click', () => {
+                if (!isMusicPlaying) {
+                    music.play().catch(error => {
+                        console.log('音乐播放失败:', error);
+                    });
+                    isMusicPlaying = true;
+                    musicBtn.textContent = '🔇 关闭音乐';
+                }
+            }, { once: true });
+            
+            // 添加点击空白处归位事件
+            document.body.addEventListener('click', handleBlankClick);
+        });
+    </script>
+</body>
+</html>
